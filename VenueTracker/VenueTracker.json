@@ -1,0 +1,10 @@
+{
+  "Author": "Virsta",
+  "Name": "VenueTracker",
+  "Punchline": "Tracker for managing guests in venues",
+  "Description": "Keeps track of people inside of a house and can check rolls and when they leave / how.",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "venue"
+  ]
+}
