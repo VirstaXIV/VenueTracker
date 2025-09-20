@@ -22,7 +22,6 @@ namespace VenueTracker;
 public sealed class Plugin : IDalamudPlugin
 {
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-    [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] public static IFramework Framework { get; private set; } = null!;
@@ -30,6 +29,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] public static IObjectTable Objects { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
     [PluginService] public static IChatGui Chat { get; private set; } = null!;
+    [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
 
     private const string CommandName = "/vtrack";
 
@@ -37,6 +37,7 @@ public sealed class Plugin : IDalamudPlugin
     public GuestList GuestList;
     public PluginState PluginState { get; init; }
     public readonly WindowSystem WindowSystem = new("VenueTracker");
+    public readonly Hooks Hooks;
     private ConfigWindow ConfigWindow { get; init; }
     private GuestsWindow GuestsWindow { get; init; }
     private readonly Doorbell doorbell;
@@ -55,6 +56,7 @@ public sealed class Plugin : IDalamudPlugin
 
         ConfigWindow = new ConfigWindow(this);
         GuestsWindow = new GuestsWindow(this);
+        Hooks = new Hooks(this);
 
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(GuestsWindow);
@@ -91,6 +93,8 @@ public sealed class Plugin : IDalamudPlugin
 
         ConfigWindow.Dispose();
         GuestsWindow.Dispose();
+        
+        Hooks.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
         
@@ -186,106 +190,106 @@ public sealed class Plugin : IDalamudPlugin
                 {
                     running = false;
                 }
-            }
-            
-            bool guestListUpdated = false;
-            bool playerArrived = false;
-            int playerCount = 0;
-            
-            Dictionary<string, bool> seenPlayers = new();
-            foreach (var o in Objects)
-            {
-                // Reject non player objects 
-                if (o is not IPlayerCharacter pc) continue;
-                var player = Player.FromCharacter(pc);
                 
-                // Skip player characters that do not have a name. 
-                // Portrait and Adventure plates show up with this. 
-                if (pc.Name.TextValue.Length == 0) continue;
-                // Im not sure what this means, but it seems that 4 is for players
-                if (o.SubKind != 4) continue;
-                playerCount++;
+                bool guestListUpdated = false;
+                bool playerArrived = false;
+                int playerCount = 0;
                 
-                // Add player to seen map 
-                if (seenPlayers.ContainsKey(player.Name))
-                    seenPlayers[player.Name] = true;
-                else
-                    seenPlayers.Add(player.Name, true);
-                
-                // Is the new player the current user 
-                var isSelf = ClientState.LocalPlayer?.Name.TextValue == player.Name;
-                
-                // Store Player name 
-                if (ClientState.LocalPlayer?.Name.TextValue.Length > 0) PluginState.PlayerName = ClientState.LocalPlayer?.Name.TextValue ?? "";
-                
-                // New Player has entered the house 
-                if (!GuestList.Guests.ContainsKey(player.Name))
+                Dictionary<string, bool> seenPlayers = new();
+                foreach (var o in Objects)
                 {
-                    guestListUpdated = true;
-                    GuestList.Guests.Add(player.Name, player);
-                    ChatPlayerLink(player, " has come inside.");
-                    if (!isSelf) playerArrived = true;
-                }
-                // Mark the player as re-entering the venue 
-                else if (!GuestList.Guests[player.Name].InHouse)
-                {
-                    guestListUpdated = true;
-                    GuestList.Guests[player.Name].InHouse = true;
-                    GuestList.Guests[player.Name].LatestEntry = DateTime.Now;
-                    GuestList.Guests[player.Name].TimeCursor = DateTime.Now;
-                    GuestList.Guests[player.Name].EntryCount++;
-                }
-                // Current user just entered house
-                else if (justEnteredHouse)
-                {
-                    GuestList.Guests[player.Name].TimeCursor = DateTime.Now;
-                }
-                
-                // Re-mark as friend incase status changed 
-                GuestList.Guests[player.Name].IsFriend = pc.StatusFlags.HasFlag(StatusFlags.Friend);
-                
-                // Mark last seen 
-                GuestList.Guests[player.Name].LastSeen = DateTime.Now;
-                
-                // Mark last time current player enter house 
-                if (justEnteredHouse && isSelf)
-                {
-                    GuestList.Guests[player.Name].LatestEntry = DateTime.Now;
-                }
-            }
-            
-            // Check for guests that have left the house 
-            foreach (var guest in GuestList.Guests)
-            {
-                // Guest is marked as in the house 
-                if (guest.Value.InHouse) 
-                {
-                    // Guest was not seen this loop 
-                    if (!seenPlayers.ContainsKey(guest.Value.Name))
+                    // Reject non player objects 
+                    if (o is not IPlayerCharacter pc) continue;
+                    var player = Player.FromCharacter(pc);
+                    
+                    // Skip player characters that do not have a name. 
+                    // Portrait and Adventure plates show up with this. 
+                    if (pc.Name.TextValue.Length == 0) continue;
+                    // Im not sure what this means, but it seems that 4 is for players
+                    if (o.SubKind != 4) continue;
+                    playerCount++;
+                    
+                    // Add player to seen map 
+                    if (seenPlayers.ContainsKey(player.Name))
+                        seenPlayers[player.Name] = true;
+                    else
+                        seenPlayers.Add(player.Name, true);
+                    
+                    // Is the new player the current user 
+                    var isSelf = ClientState.LocalPlayer?.Name.TextValue == player.Name;
+                    
+                    // Store Player name 
+                    if (ClientState.LocalPlayer?.Name.TextValue.Length > 0) PluginState.PlayerName = ClientState.LocalPlayer?.Name.TextValue ?? "";
+                    
+                    // New Player has entered the house 
+                    if (!GuestList.Guests.ContainsKey(player.Name))
                     {
-                        guest.Value.OnLeaveHouse();
                         guestListUpdated = true;
+                        GuestList.Guests.Add(player.Name, player);
+                        ChatPlayerLink(player, " has come inside.");
+                        if (!isSelf) playerArrived = true;
                     }
-                    // Guest was seen this loop 
-                    else 
+                    // Mark the player as re-entering the venue 
+                    else if (!GuestList.Guests[player.Name].InHouse)
                     {
-                        guest.Value.OnAccumulateTime();
+                        guestListUpdated = true;
+                        GuestList.Guests[player.Name].InHouse = true;
+                        GuestList.Guests[player.Name].LatestEntry = DateTime.Now;
+                        GuestList.Guests[player.Name].TimeCursor = DateTime.Now;
+                        GuestList.Guests[player.Name].EntryCount++;
+                    }
+                    // Current user just entered house
+                    else if (justEnteredHouse)
+                    {
+                        GuestList.Guests[player.Name].TimeCursor = DateTime.Now;
+                    }
+                    
+                    // Re-mark as friend incase status changed 
+                    GuestList.Guests[player.Name].IsFriend = pc.StatusFlags.HasFlag(StatusFlags.Friend);
+                    
+                    // Mark last seen 
+                    GuestList.Guests[player.Name].LastSeen = DateTime.Now;
+                    
+                    // Mark last time current player enter house 
+                    if (justEnteredHouse && isSelf)
+                    {
+                        GuestList.Guests[player.Name].LatestEntry = DateTime.Now;
                     }
                 }
+                
+                // Check for guests that have left the house 
+                foreach (var guest in GuestList.Guests)
+                {
+                    // Guest is marked as in the house 
+                    if (guest.Value.InHouse) 
+                    {
+                        // Guest was not seen this loop 
+                        if (!seenPlayers.ContainsKey(guest.Value.Name))
+                        {
+                            guest.Value.OnLeaveHouse();
+                            guestListUpdated = true;
+                        }
+                        // Guest was seen this loop 
+                        else 
+                        {
+                            guest.Value.OnAccumulateTime();
+                        }
+                    }
+                }
+                
+                if (Configuration.SoundAlerts && playerArrived)
+                {
+                    doorbell.Play();
+                }
+                
+                // Save number of players seen this update 
+                PluginState.PlayersInHouse = playerCount;
+                
+                // Save config if we saw new players
+                if (guestListUpdated) GuestList.Save();
+                
+                justEnteredHouse = false;
             }
-            
-            if (Configuration.SoundAlerts && playerArrived)
-            {
-                doorbell.Play();
-            }
-            
-            // Save number of players seen this update 
-            PluginState.PlayersInHouse = playerCount;
-            
-            // Save config if we saw new players
-            if (guestListUpdated) GuestList.Save();
-            
-            justEnteredHouse = false;
         }
         catch (Exception e)
         {
@@ -293,6 +297,15 @@ public sealed class Plugin : IDalamudPlugin
             Log.Error(e.ToString());
         }
         running = false;
+    }
+    
+    public void ProcessIncomingRoll(string name, ushort homeWorldId, int roll, int outOf)
+    {
+        if (GuestList.Guests.ContainsKey(name) && GuestList.Guests[name].InHouse)
+        {
+            GuestList.Guests[name].LastRoll = roll;
+            GuestList.Guests[name].LastRollMax = outOf == 0 ? 1000 : outOf;
+        }
     }
     
     public void PlayDoorbell()

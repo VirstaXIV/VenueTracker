@@ -44,7 +44,7 @@ public class GuestList
     
     public void Load()
     {
-        if (this.HouseId == 0) return;
+        if (HouseId == 0) return;
 
         // Don't attempt to load if there is no file 
         var fileInfo = FileStore.GetFileInfo(GetFileName());
@@ -63,5 +63,10 @@ public class GuestList
     {
         var matches = Guests.Where(kvp => kvp.Value.InHouse);
         Guests = matches.ToDictionary();
+    }
+
+    public void ClearList()
+    {
+        Guests = new Dictionary<string, Player>();
     }
 }

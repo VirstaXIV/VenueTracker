@@ -18,6 +18,8 @@ public class Player
     public DateTime TimeCursor;
     public double MilisecondsInHouse { get; set; } = 0;
     public int EntryCount { get; set; } = 0;
+    public int LastRoll { get; set; } = 0;
+    public int LastRollMax { get; set; } = 1000;
     public string WorldName { get; set; } = "";
     
     public static Player FromCharacter(IPlayerCharacter character) {
@@ -33,6 +35,8 @@ public class Player
             FirstSeen = DateTime.Now,
             LastSeen = DateTime.Now,
             LatestEntry = DateTime.Now,
+            LastRoll = 0,
+            LastRollMax = 1000,
             TimeCursor = DateTime.Now
         };
         return player;

@@ -12,6 +12,8 @@ public class Configuration : IPluginConfiguration
     
     public bool SoundAlerts { get; set; } = false;
     public float SoundVolume { get; set; } = 1;
+    public bool SortFriendsToTop { get; set; } = true;
+    public bool SortCurrentVisitorsTop { get; set; } = true;
 
     // The below exist just to make saving less cumbersome
     public void Save()

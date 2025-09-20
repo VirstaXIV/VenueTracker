@@ -50,5 +50,8 @@ public class ConfigWindow : Window, IDisposable
         {
             ImGui.SetTooltip("Test Sound");
         }
+        
+        ImGui.Separator();
+        ImGui.Spacing();
     }
 }

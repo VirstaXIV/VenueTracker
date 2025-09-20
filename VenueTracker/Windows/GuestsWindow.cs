@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
 using VenueTracker.UI;
 
@@ -36,6 +37,16 @@ public class GuestsWindow : Window, IDisposable
                 "You are in a " + TerritoryUtils.GetHouseType(plugin.PluginState.CurrentHouse.Type) + 
                 " in " + plugin.PluginState.CurrentHouse.District + 
                 " W" + plugin.PluginState.CurrentHouse.Ward + " " + typeText);
+
+            if (ImGui.Button("Reset Rolls"))
+            {
+                guestsListWidget.ResetRolls(plugin.PluginState.CurrentHouse.HouseId);
+            }
+            
+            if (ImGui.Button("Reset Table"))
+            {
+                guestsListWidget.ResetTable(plugin.PluginState.CurrentHouse.HouseId);
+            }
             
             ImGui.Spacing();
             ImGui.Separator();
