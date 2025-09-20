@@ -4,7 +4,10 @@
   "Punchline": "Tracker for managing guests in venues",
   "Description": "Keeps track of people inside of a house and can check rolls and when they leave / how.",
   "ApplicableVersion": "any",
+  "RepoUrl": "https://github.com/VirstaXIV/VenueTracker",
   "Tags": [
-    "venue"
-  ]
+    "venue",
+    "guests"
+  ],
+  "IconUrl": "https://raw.githubusercontent.com/VirstaXIV/VenueTracker/master/images/icon.png"
 }
