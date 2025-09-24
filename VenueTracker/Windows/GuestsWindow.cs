@@ -36,7 +36,8 @@ public class GuestsWindow : Window, IDisposable
             ImGui.Text(
                 "You are in a " + TerritoryUtils.GetHouseType(plugin.PluginState.CurrentHouse.Type) + 
                 " in " + plugin.PluginState.CurrentHouse.District + 
-                " W" + plugin.PluginState.CurrentHouse.Ward + " " + typeText);
+                " W" + plugin.PluginState.CurrentHouse.Ward + " " + typeText +
+                " With " + guestsListWidget.GetCount() + " People Inside");
 
             if (ImGui.Button("Reset Rolls"))
             {

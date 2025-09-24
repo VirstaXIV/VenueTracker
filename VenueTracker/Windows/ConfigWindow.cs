@@ -21,10 +21,20 @@ public class ConfigWindow : Window, IDisposable
 
     public override void Draw()
     {
-        var configValue = Configuration.SoundAlerts;
-        if (ImGui.Checkbox("Add Doorbell Sound", ref configValue))
+        var friendsTopValue = Configuration.SortFriendsToTop;
+        if (ImGui.Checkbox("Sort Friends to Top", ref friendsTopValue))
         {
-            Configuration.SoundAlerts = configValue;
+            Configuration.SortFriendsToTop = friendsTopValue;
+            Configuration.Save();
+        }
+        
+        ImGui.Separator();
+        ImGui.Spacing();
+        
+        var soundAlertsValue = Configuration.SoundAlerts;
+        if (ImGui.Checkbox("Add Doorbell Sound", ref soundAlertsValue))
+        {
+            Configuration.SoundAlerts = soundAlertsValue;
             Configuration.Save();
         }
         

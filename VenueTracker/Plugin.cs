@@ -237,6 +237,8 @@ public sealed class Plugin : IDalamudPlugin
                         GuestList.Guests[player.Name].LatestEntry = DateTime.Now;
                         GuestList.Guests[player.Name].TimeCursor = DateTime.Now;
                         GuestList.Guests[player.Name].EntryCount++;
+                        ChatPlayerLink(player, " has come inside.");
+                        if (!isSelf) playerArrived = true;
                     }
                     // Current user just entered house
                     else if (justEnteredHouse)

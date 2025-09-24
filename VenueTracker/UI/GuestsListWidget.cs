@@ -30,6 +30,11 @@ public class GuestsListWidget
         ResetGuestTable(houseId);
     }
 
+    public unsafe int GetCount()
+    {
+        return plugin.GuestList.Guests.Count;
+    }
+
     private List<KeyValuePair<string, Player>> GetSortedGuests(ImGuiTableSortSpecsPtr sortSpecs, long houseId)
     {
         ImGuiTableColumnSortSpecsPtr currentSpecs = sortSpecs.Specs;
