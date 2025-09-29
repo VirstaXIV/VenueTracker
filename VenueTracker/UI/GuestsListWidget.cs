@@ -30,7 +30,15 @@ public class GuestsListWidget
         ResetGuestTable(houseId);
     }
 
-    public unsafe int GetCount()
+    public unsafe int GetActiveCount()
+    {
+        var activeGuestsList = plugin.GuestList.Guests.Where(player => player.Value.InHouse == true);
+        var activeGuests = activeGuestsList.ToDictionary(player => player.Value.Name, player => player.Value);
+        
+        return activeGuests.Count;
+    }
+    
+    public unsafe int GetTotalCount()
     {
         return plugin.GuestList.Guests.Count;
     }
