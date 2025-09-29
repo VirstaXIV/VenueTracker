@@ -4,14 +4,14 @@
         "Name": "VenueTracker",
         "Description": "Keeps track of people inside of a house and can check rolls and when they leave / how.",
         "InternalName": "VenueTracker",
-        "AssemblyVersion": "0.1.0",
+        "AssemblyVersion": "0.1.1",
         "RepoUrl": "https://github.com/VirstaXIV/VenueTracker",
         "ApplicableVersion": "any",
         "DalamudApiLevel": 13,
         "Punchline": "Tracker for managing guests in venues",
-        "DownloadLinkInstall": "https://github.com/VirstaXIV/VenueTracker/releases/download/0.1.0/latest.zip",
-        "DownloadLinkTesting": "https://github.com/VirstaXIV/VenueTracker/releases/download/0.1.0/latest.zip",
-        "DownloadLinkUpdate": "https://github.com/VirstaXIV/VenueTracker/releases/download/0.1.0/latest.zip",
+        "DownloadLinkInstall": "https://github.com/VirstaXIV/VenueTracker/releases/download/0.1.1/latest.zip",
+        "DownloadLinkTesting": "https://github.com/VirstaXIV/VenueTracker/releases/download/0.1.1/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/VirstaXIV/VenueTracker/releases/download/0.1.1/latest.zip",
         "IconUrl": "https://raw.githubusercontent.com/VirstaXIV/VenueTracker/master/images/icon.png"
     }
 ]
