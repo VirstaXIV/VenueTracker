@@ -1,18 +1,50 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using System.Threading;
 using Dalamud.Bindings.ImGui;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using VenueTracker.Data;
+using VenueTracker.Services;
+using VenueTracker.Services.Config;
+using Task = System.Threading.Tasks.Task;
 
-namespace VenueTracker.UI;
+namespace VenueTracker.UI.Components;
 
-public class GuestsListWidget
+public class GuestsListWidget : IDisposable, IHostedService
 {
-    private readonly Plugin plugin;
+    private readonly ILogger<GuestsListWidget> _logger;
+    private readonly ConfigService _configService;
+    private readonly PluginState _pluginState;
+    private readonly GuestList _guestList;
+    private readonly UtilService _utilService;
     private static unsafe string GetUserPath() => Framework.Instance()->UserPathString;
     
-    public GuestsListWidget(Plugin plugin)
+    public GuestsListWidget(ILogger<GuestsListWidget> logger, ConfigService configService, PluginState pluginState, 
+        GuestList guestList, UtilService utilService)
     {
-        this.plugin = plugin;
+        _logger = logger;
+        _configService = configService;
+        _pluginState = pluginState;
+        _guestList = guestList;
+        _utilService = utilService;
+    }
+    
+    public void Dispose()
+    {
+        //
+    }
+    
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
     
     public unsafe void Draw(long houseId)
@@ -32,7 +64,7 @@ public class GuestsListWidget
 
     public unsafe int GetActiveCount()
     {
-        var activeGuestsList = plugin.GuestList.Guests.Where(player => player.Value.InHouse == true);
+        var activeGuestsList = _guestList.Guests.Where(player => player.Value.InHouse == true);
         var activeGuests = activeGuestsList.ToDictionary(player => player.Value.Name, player => player.Value);
         
         return activeGuests.Count;
@@ -40,23 +72,32 @@ public class GuestsListWidget
     
     public unsafe int GetTotalCount()
     {
-        return plugin.GuestList.Guests.Count;
+        return _guestList.Guests.Count;
+    }
+    
+    public void ProcessIncomingRoll(string name, ushort homeWorldId, int roll, int outOf)
+    {
+        if (_guestList.Guests.ContainsKey(name) && _guestList.Guests[name].InHouse)
+        {
+            _guestList.Guests[name].LastRoll = roll;
+            _guestList.Guests[name].LastRollMax = outOf == 0 ? 1000 : outOf;
+        }
     }
 
     private List<KeyValuePair<string, Player>> GetSortedGuests(ImGuiTableSortSpecsPtr sortSpecs, long houseId)
     {
         ImGuiTableColumnSortSpecsPtr currentSpecs = sortSpecs.Specs;
 
-        var guestList = plugin.GuestList.Guests.ToList();
+        var guestList = _guestList.Guests.ToList();
         
         guestList.Sort((pair1, pair2) => {
         // Filter friends to top 
-        if (plugin.Configuration.SortFriendsToTop && pair1.Value.IsFriend != pair2.Value.IsFriend && 
-        ((plugin.Configuration.SortCurrentVisitorsTop && pair1.Value.InHouse == pair2.Value.InHouse) || !plugin.Configuration.SortCurrentVisitorsTop)) {
+        if (_configService.Current.SortFriendsToTop && pair1.Value.IsFriend != pair2.Value.IsFriend && 
+            ((_configService.Current.SortCurrentVisitorsTop && pair1.Value.InHouse == pair2.Value.InHouse) || !_configService.Current.SortCurrentVisitorsTop)) {
         return pair2.Value.IsFriend.CompareTo(pair1.Value.IsFriend);
         } 
         // Filter in house to top 
-        else if (plugin.Configuration.SortCurrentVisitorsTop && pair1.Value.InHouse != pair2.Value.InHouse) {
+        else if (_configService.Current.SortCurrentVisitorsTop && pair1.Value.InHouse != pair2.Value.InHouse) {
             return pair2.Value.InHouse.CompareTo(pair1.Value.InHouse);
         }
         // Other general sorts 
@@ -131,16 +172,16 @@ public class GuestsListWidget
 
     private void ResetGuestRolls(long houseId)
     {
-        foreach (var (name, player) in plugin.GuestList.Guests)
+        foreach (var (name, player) in _guestList.Guests)
         {
-            plugin.GuestList.Guests[name].LastRoll = 0;
-            plugin.GuestList.Guests[name].LastRollMax = 1000;
+            _guestList.Guests[name].LastRoll = 0;
+            _guestList.Guests[name].LastRollMax = 1000;
         }
     }
     
     private void ResetGuestTable(long houseId)
     {
-        plugin.GuestList.ClearList();
+        _guestList.ClearList();
     }
 
     private void DrawGuestTable(long houseId)
@@ -168,7 +209,7 @@ public class GuestsListWidget
                 var playerColor = Colors.GetGuestListColor(player.Value, true);
                 var color = Colors.GetGuestListColor(player.Value, false);
 
-                if (!player.Value.InHouse && plugin.PluginState.CurrentHouse.HouseId == houseId) {
+                if (!player.Value.InHouse && _pluginState.CurrentHouse.HouseId == houseId) {
                     color[3] = .5f;
                     playerColor[3] = .5f;
                 }
@@ -178,7 +219,7 @@ public class GuestsListWidget
                 ImGui.TableNextColumn();
                 ImGui.TextColored(playerColor, player.Value.Name);
                 if (ImGui.IsItemClicked()) {
-                    plugin.ChatPlayerLink(player.Value);
+                    _utilService.ChatPlayerLink(player.Value);
                 }
                 ImGui.TableNextColumn();
                 ImGui.TextColored(color, "" + player.Value.EntryCount);
@@ -187,7 +228,7 @@ public class GuestsListWidget
                 ImGui.TableNextColumn();
                 ImGui.TextColored(color, "" + player.Value.LastRollMax);
                 ImGui.TableNextColumn();
-                ImGui.TextColored(color, "" + player.Value.GetTimeInHouse(plugin.PluginState.CurrentHouse.HouseId == houseId));
+                ImGui.TextColored(color, "" + player.Value.GetTimeInHouse(_pluginState.CurrentHouse.HouseId == houseId));
                 ImGui.TableNextColumn();
                 ImGui.TextColored(color, player.Value.FirstSeen.ToString("h:mm tt"));
                 ImGui.TableNextColumn();

@@ -1,4 +1,4 @@
-﻿namespace VenueTracker;
+﻿namespace VenueTracker.Data;
 
 public class House
 {

@@ -2,7 +2,7 @@
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 
-namespace VenueTracker;
+namespace VenueTracker.Data;
 
 [Serializable]
 public class Player

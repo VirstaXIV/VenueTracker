@@ -1,16 +1,25 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Dalamud.Hooking;
 using Dalamud.Memory;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.Text;
 using FFXIVClientStructs.STD;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using VenueTracker.Data;
+using VenueTracker.Services.Mediator;
+using VenueTracker.UI.Components;
 
-namespace VenueTracker.Utils;
+namespace VenueTracker.Services;
 
-public unsafe class Hooks
+public unsafe class HookService : IHostedService, IMediatorSubscriber
 {
-    private readonly Plugin plugin;
+    private readonly ILogger<HookService> _logger;
+    private readonly GuestsListWidget _guestsListWidget;
     
     [Signature("E8 ?? ?? ?? ?? EB ?? 45 33 C9 4C 8B C6", DetourName = nameof(RandomPrintLogDetour))]
     private Hook<RandomPrintLogDelegate>? RandomPrintLogHook { get; set; }
@@ -21,14 +30,26 @@ public unsafe class Hooks
     private delegate void DicePrintLogDelegate(RaptureLogModule* module, ushort chatType, byte* userName, void* unused, ushort worldId, ulong accountId, ulong contentId, ushort roll, ushort outOf, uint entityId, byte ident);
 
 
-    public Hooks(Plugin plugin)
+    public HookService(ILogger<HookService> logger, IGameInteropProvider gameInteropProvider, GuestsListWidget guestsListWidget)
     {
-        this.plugin = plugin;
-
-        Plugin.GameInteropProvider.InitializeFromAttributes(this);
+        _logger = logger;
+        _guestsListWidget = guestsListWidget;
+        gameInteropProvider.InitializeFromAttributes(this);
 
         RandomPrintLogHook?.Enable();
         DicePrintLogHook?.Enable();
+    }
+    
+    public VSyncMediator Mediator { get; }
+    
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
     
     public void Dispose()
@@ -51,7 +72,7 @@ public unsafe class Hooks
             var roll = (*parameter)[1].IntValue;
             var outOf = logMessageId == 3887 ? (*parameter)[2].IntValue : 0;
 
-            plugin.ProcessIncomingRoll(name, homeWorldId, roll, outOf);
+            _guestsListWidget.ProcessIncomingRoll(name, homeWorldId, roll, outOf);
         }
         catch (Exception ex)
         {
@@ -66,7 +87,7 @@ public unsafe class Hooks
         try
         {
             var name = MemoryHelper.ReadStringNullTerminated((nint)playerName);
-            plugin.ProcessIncomingRoll(name, worldId, roll, outOf);
+            _guestsListWidget.ProcessIncomingRoll(name, worldId, roll, outOf);
         }
         catch (Exception ex)
         {

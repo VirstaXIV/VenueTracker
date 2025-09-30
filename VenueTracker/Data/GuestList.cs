@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VenueTracker.Utils;
 
-namespace VenueTracker;
+namespace VenueTracker.Data;
 
 [Serializable]
 public class GuestList

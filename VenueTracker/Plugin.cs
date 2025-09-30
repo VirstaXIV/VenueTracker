@@ -1,4 +1,5 @@
 using Dalamud.Game.Command;
+using Dalamud.Game.ClientState.Objects;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Interface.Windowing;
@@ -10,59 +11,119 @@ using Dalamud.Game.Text;
 using System;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using System.Collections.Generic;
-using VenueTracker.Windows;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Bindings.ImPlot;
 using Dalamud.Bindings.ImGui;
-using VenueTracker.Utils;
+using VenueTracker.Api;
+using VenueTracker.Data;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using VenueTracker.Data.Config;
+using VenueTracker.Services;
+using VenueTracker.Services.Config;
+using VenueTracker.Services.Mediator;
+using VenueTracker.UI.Components;
+using VenueTracker.UI.Windows;
 
 namespace VenueTracker;
 
 // ReSharper disable once ClassNeverInstantiated.Global
 public sealed class Plugin : IDalamudPlugin
 {
+    private readonly IHost _host;
+    public static Plugin Self;
+    
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] public static IFramework Framework { get; private set; } = null!;
-    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
+    [PluginService] internal static IDataManager DataManager { get; private set; } = null!; 
+    [PluginService] internal static INotificationManager NotificationManager { get; private set; } = null!;
+    [PluginService] internal static ITargetManager TargetManager { get; private set; } = null!;
     [PluginService] public static IObjectTable Objects { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
-    [PluginService] public static IChatGui Chat { get; private set; } = null!;
+    [PluginService] public static ICondition Condition { get; private set; } = null!;
+    [PluginService] public static IGameGui GameGui { get; private set; } = null!;
+    [PluginService] public static IChatGui ChatGui { get; private set; } = null!;
+    [PluginService] public static IToastGui ToastGui { get; private set; } = null!;
+    [PluginService] public static INamePlateGui NamePlateGui { get; private set; } = null!;
     [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
+    [PluginService] public static IContextMenu ContextMenu { get; private set; } = null!;
+    [PluginService] public static ITextureProvider TextureProvider { get; private set; } = null!;
+    [PluginService] public static IGameConfig GameConfig { get; private set; } = null!;
+    [PluginService] public static IPartyList PartyList { get; private set; } = null!; 
+    [PluginService] public static IDtrBar DtrBar { get; private set; } = null!;
 
     private const string CommandName = "/vtrack";
-
-    public Configuration Configuration { get; init; }
-    public GuestList GuestList;
-    public VenueSyncApi VenueSyncApi;
-    public PluginState PluginState { get; init; }
-    public readonly WindowSystem WindowSystem = new("VenueTracker");
-    public readonly Hooks Hooks;
-    public bool IsRequestingApi = false;
-    private ConfigWindow ConfigWindow { get; init; }
-    private GuestsWindow GuestsWindow { get; init; }
-    private readonly Doorbell doorbell;
     private bool running = false;
     private bool justEnteredHouse = false;
 
     public Plugin()
     {
+        Plugin.Self = this;
+        _host = new HostBuilder()
+                .UseContentRoot(PluginInterface.ConfigDirectory.FullName)
+                .ConfigureLogging(lb =>
+                {
+                    lb.ClearProviders();
+                    lb.AddDalamudLogging(Log);
+                    lb.SetMinimumLevel(LogLevel.Trace);
+                })
+                .ConfigureServices(collection =>
+                {
+                    collection.AddSingleton(new WindowSystem("VenueSync"));
+                    
+                    // dalamud services
+                    collection.AddSingleton(_ => PluginInterface);
+                    collection.AddSingleton(_ => PluginInterface.UiBuilder);
+                    collection.AddSingleton(_ => CommandManager);
+                    collection.AddSingleton(_ => DataManager);
+                    collection.AddSingleton(_ => Framework);
+                    collection.AddSingleton(_ => Objects);
+                    collection.AddSingleton(_ => ClientState);
+                    collection.AddSingleton(_ => Condition);
+                    collection.AddSingleton(_ => GameGui);
+                    collection.AddSingleton(_ => ChatGui);
+                    collection.AddSingleton(_ => DtrBar);
+                    collection.AddSingleton(_ => ToastGui);
+                    collection.AddSingleton(_ => Log);
+                    collection.AddSingleton(_ => TargetManager);
+                    collection.AddSingleton(_ => NotificationManager);
+                    collection.AddSingleton(_ => TextureProvider);
+                    collection.AddSingleton(_ => ContextMenu);
+                    collection.AddSingleton(_ => GameInteropProvider);
+                    collection.AddSingleton(_ => NamePlateGui);
+                    collection.AddSingleton(_ => GameConfig);
+                    collection.AddSingleton(_ => PartyList);
+                    
+                    // VenueSync Services
+                    collection.AddSingleton<VSyncMediator>();
+                    collection.AddSingleton<Request>();
+                    collection.AddSingleton<DoorbellService>();
+                    collection.AddSingleton<HookService>();
+                    collection.AddSingleton<ApiService>();
+                    collection.AddSingleton<PluginState>();
+                    collection.AddSingleton<GuestsListWidget>();
+                    collection.AddSingleton<GuestList>();
+                    collection.AddSingleton<UtilService>();
+                    
+                    collection.AddSingleton((s) => new ConfigService(PluginInterface.ConfigDirectory.FullName));
+                    collection.AddSingleton<IConfigService<IVSyncConfiguration>>(s => s.GetRequiredService<ConfigService>());
+                    collection.AddSingleton<ConfigurationSaveService>();
+                    
+                    // scoped services
+                    collection.AddScoped<WindowMediatorSubscriberBase, ConfigWindow>();
+                    
+                    collection.AddHostedService(p => p.GetRequiredService<ConfigurationSaveService>());
+                    collection.AddHostedService(p => p.GetRequiredService<VSyncMediator>());
+                })
+                .Build();
+            
+            
+            
         ImPlot.SetImGuiContext(ImGui.GetCurrentContext());
         ImPlot.SetCurrentContext(ImPlot.CreateContext());
-        
-        PluginState = new PluginState();
-        GuestList = new GuestList();
-        VenueSyncApi = new VenueSyncApi(this);
-        
-        Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-
-        ConfigWindow = new ConfigWindow(this);
-        GuestsWindow = new GuestsWindow(this);
-        Hooks = new Hooks(this);
-
-        WindowSystem.AddWindow(ConfigWindow);
-        WindowSystem.AddWindow(GuestsWindow);
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -74,9 +135,6 @@ public sealed class Plugin : IDalamudPlugin
         Framework.Update += OnFrameworkUpdate;
         ClientState.Logout += OnLogout;
         
-        doorbell = new Doorbell(this);
-        doorbell.Load();
-        
         OnTerritoryChanged(ClientState.TerritoryType);
 
         PluginInterface.UiBuilder.Draw += DrawUI;
@@ -87,17 +145,15 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
+        _host.StopAsync().GetAwaiter().GetResult();
+        _host.Dispose();
+        
         Framework.Update -= OnFrameworkUpdate;
         ClientState.TerritoryChanged -= OnTerritoryChanged;
-        
-        doorbell.DisposeFile();
-        
-        WindowSystem.RemoveAllWindows();
-
-        ConfigWindow.Dispose();
         GuestsWindow.Dispose();
         
-        Hooks.Dispose();
+        HookService.Dispose();
+        Request.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
         
@@ -159,15 +215,6 @@ public sealed class Plugin : IDalamudPlugin
         Configuration.Save();
     }
 
-    public IPlayerCharacter? GetCurrentPlayer()
-    {
-        // Store Player name / world
-        if (ClientState.LocalPlayer?.Name.TextValue.Length > 0) PluginState.PlayerName = ClientState.LocalPlayer?.Name.TextValue ?? "";
-        if (ClientState.LocalPlayer?.HomeWorld.Value.Name.ToString().Length > 0) PluginState.PlayerWorld = ClientState.LocalPlayer?.HomeWorld.Value.Name.ToString() ?? "";
-
-        return ClientState.LocalPlayer;
-    }
-
     private unsafe void OnFrameworkUpdate(IFramework framework)
     {
         if (running) {
@@ -184,6 +231,7 @@ public sealed class Plugin : IDalamudPlugin
                 {
                     var housingManager = HousingManager.Instance();
                     var worldId = ClientState.LocalPlayer?.CurrentWorld.Value.RowId;
+                    PluginState.CurrentWorld = ClientState.LocalPlayer?.CurrentWorld.Value.Name.ToString();
 
                     if (PluginState.CurrentHouse.HouseId != (long)housingManager->GetCurrentIndoorHouseId().Id &&
                         worldId != null)
@@ -310,38 +358,5 @@ public sealed class Plugin : IDalamudPlugin
             Log.Error(e.ToString());
         }
         running = false;
-    }
-    
-    public void ProcessIncomingRoll(string name, ushort homeWorldId, int roll, int outOf)
-    {
-        if (GuestList.Guests.ContainsKey(name) && GuestList.Guests[name].InHouse)
-        {
-            GuestList.Guests[name].LastRoll = roll;
-            GuestList.Guests[name].LastRollMax = outOf == 0 ? 1000 : outOf;
-        }
-    }
-    
-    public void PlayDoorbell()
-    {
-        doorbell.Play();
-    }
-    
-    public void ReloadDoorbell()
-    {
-        doorbell.Load();
-    }
-    
-    public void ChatPlayerLink(Player player, string? message = null)
-    {
-
-        var messageBuilder = new SeStringBuilder();
-        messageBuilder.Add(new PlayerPayload(player.Name, player.HomeWorld));
-        if (message != null)
-        {
-            messageBuilder.AddText(message);
-        }
-
-        var entry = new XivChatEntry() { Message = messageBuilder.Build() };
-        Chat.Print(entry);
     }
 }
