@@ -15,6 +15,9 @@ public class Configuration : IPluginConfiguration
     public bool SortFriendsToTop { get; set; } = true;
     public bool SortCurrentVisitorsTop { get; set; } = true;
 
+    public string EndpointUrl { get; set; } = "";
+    public string ServerKey { get; set; } = "";
+
     // The below exist just to make saving less cumbersome
     public void Save()
     {

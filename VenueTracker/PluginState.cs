@@ -6,5 +6,6 @@ public class PluginState
     public bool PlayerInHouse { get; set; } = false;
     public int PlayersInHouse { get; set; } = 0;
     public string PlayerName { get; set; } = "";
+    public string PlayerWorld { get; set; } = "";
     public ushort Territory { get; set; } = 0;
 }

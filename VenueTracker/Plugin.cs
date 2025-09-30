@@ -35,9 +35,11 @@ public sealed class Plugin : IDalamudPlugin
 
     public Configuration Configuration { get; init; }
     public GuestList GuestList;
+    public VenueSyncApi VenueSyncApi;
     public PluginState PluginState { get; init; }
     public readonly WindowSystem WindowSystem = new("VenueTracker");
     public readonly Hooks Hooks;
+    public bool IsRequestingApi = false;
     private ConfigWindow ConfigWindow { get; init; }
     private GuestsWindow GuestsWindow { get; init; }
     private readonly Doorbell doorbell;
@@ -51,6 +53,7 @@ public sealed class Plugin : IDalamudPlugin
         
         PluginState = new PluginState();
         GuestList = new GuestList();
+        VenueSyncApi = new VenueSyncApi(this);
         
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
@@ -156,6 +159,15 @@ public sealed class Plugin : IDalamudPlugin
         Configuration.Save();
     }
 
+    public IPlayerCharacter? GetCurrentPlayer()
+    {
+        // Store Player name / world
+        if (ClientState.LocalPlayer?.Name.TextValue.Length > 0) PluginState.PlayerName = ClientState.LocalPlayer?.Name.TextValue ?? "";
+        if (ClientState.LocalPlayer?.HomeWorld.Value.Name.ToString().Length > 0) PluginState.PlayerWorld = ClientState.LocalPlayer?.HomeWorld.Value.Name.ToString() ?? "";
+
+        return ClientState.LocalPlayer;
+    }
+
     private unsafe void OnFrameworkUpdate(IFramework framework)
     {
         if (running) {
@@ -194,6 +206,8 @@ public sealed class Plugin : IDalamudPlugin
                 bool guestListUpdated = false;
                 bool playerArrived = false;
                 int playerCount = 0;
+
+                var currentPlayer = GetCurrentPlayer();
                 
                 Dictionary<string, bool> seenPlayers = new();
                 foreach (var o in Objects)
@@ -216,10 +230,7 @@ public sealed class Plugin : IDalamudPlugin
                         seenPlayers.Add(player.Name, true);
                     
                     // Is the new player the current user 
-                    var isSelf = ClientState.LocalPlayer?.Name.TextValue == player.Name;
-                    
-                    // Store Player name 
-                    if (ClientState.LocalPlayer?.Name.TextValue.Length > 0) PluginState.PlayerName = ClientState.LocalPlayer?.Name.TextValue ?? "";
+                    var isSelf = currentPlayer?.Name.TextValue == player.Name;
                     
                     // New Player has entered the house 
                     if (!GuestList.Guests.ContainsKey(player.Name))
