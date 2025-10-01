@@ -27,18 +27,20 @@ public class PluginService : MediatorSubscriberBase, IHostedService
     private readonly IFramework _framework;
     private readonly IClientState _clientState;
     private readonly PluginState _pluginState;
+    private readonly IDataManager _gameData;
     private readonly IObjectTable _objectTable;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly GuestList _guestList;
     private readonly DoorbellService _doorbellService;
+    private readonly TerritoryUtils _territoryUtils;
     private IServiceScope? _runtimeServiceScope;
     private Task? _launchTask = null;
     private bool running = false;
     private bool justEnteredHouse = false;
     
-    public PluginService(ILogger<PluginService> logger, UtilService utilService, PluginState pluginState,
+    public PluginService(ILogger<PluginService> logger, UtilService utilService, PluginState pluginState, IDataManager gameData,
         IFramework framework, IClientState clientState, GuestList guestList, DoorbellService doorbellService, IObjectTable objectTable,
-        ConfigService configService, IServiceScopeFactory serviceScopeFactory, VSyncMediator mediator) : base(logger, mediator)
+        TerritoryUtils territoryUtils, ConfigService configService, IServiceScopeFactory serviceScopeFactory, VSyncMediator mediator) : base(logger, mediator)
     {
         _logger = logger;
         _utilService = utilService;
@@ -46,10 +48,12 @@ public class PluginService : MediatorSubscriberBase, IHostedService
         _pluginState = pluginState;
         _clientState = clientState;
         _objectTable = objectTable;
+        _gameData = gameData;
         _framework = framework;
         _serviceScopeFactory = serviceScopeFactory;
         _guestList = guestList;
         _doorbellService = doorbellService;
+        _territoryUtils = territoryUtils;
     }
     
     public Task StartAsync(CancellationToken cancellationToken)
@@ -81,6 +85,7 @@ public class PluginService : MediatorSubscriberBase, IHostedService
     
     public void Dispose()
     {
+        //TODO: Need to properly handle disposal here
         _framework.Update -= OnFrameworkUpdate;
         _clientState.TerritoryChanged -= OnTerritoryChanged;
     }
@@ -187,7 +192,9 @@ public class PluginService : MediatorSubscriberBase, IHostedService
                         _pluginState.CurrentHouse.Ward = housingManager->GetCurrentWard() + 1; // Game stores ward as -1 
                         _pluginState.CurrentHouse.Room = housingManager->GetCurrentRoom();
                         _pluginState.CurrentHouse.Type = (ushort)HousingManager.GetOriginalHouseTerritoryTypeId();
-                        _pluginState.CurrentHouse.District = TerritoryUtils.GetDistrict((long)housingManager->GetCurrentIndoorHouseId().Id);
+                        _pluginState.CurrentHouse.District = _territoryUtils.GetDistrict((long)housingManager->GetCurrentIndoorHouseId().Id);
+                        _pluginState.CurrentHouse.WorldName = _gameData.GetExcelSheet<Lumina.Excel.Sheets.World>()?.GetRow((uint)worldId).Name.ToString() ?? $"World_{worldId}";
+                        _pluginState.CurrentHouse.DataCenter = _gameData.GetExcelSheet<Lumina.Excel.Sheets.World>()?.GetRow((uint)worldId).DataCenter.Value.Name.ToString() ?? "";
                         
                         _guestList.Load();
                     }

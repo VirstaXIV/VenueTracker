@@ -1,14 +1,25 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using Dalamud.Plugin;
 using Dalamud.Utility;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace VenueTracker.Utils;
 
 public class FileStore
 {
-    public static void SaveClassToFile(string path, Type fileType, object objectData)
+    private readonly ILogger<FileStore>  _logger;
+    private readonly IDalamudPluginInterface  _pluginInterface;
+    
+    public FileStore(ILogger<FileStore> logger, IDalamudPluginInterface pluginInterface)
+    {
+        _logger = logger;
+        _pluginInterface = pluginInterface;
+    }
+    
+    public void SaveClassToFile(string path, Type fileType, object objectData)
     {
         try
         {
@@ -17,17 +28,17 @@ public class FileStore
         }
         catch (Exception exception)
         {
-            Plugin.Log.Error("Failed to save file: " + exception.ToString());
+            _logger.LogError("Failed to save file: " + exception.ToString());
         }
     }
     
-    public static void SaveClassToFileInPluginDir(string fileName, Type fileType, object objectData)
+    public void SaveClassToFileInPluginDir(string fileName, Type fileType, object objectData)
     {
         var fileInfo = GetFileInfo(fileName);
         SaveClassToFile(fileInfo.FullName, fileType, objectData);
     }
     
-    public static T LoadFile<T>(string filePath, object targetObject)
+    public T LoadFile<T>(string filePath, object targetObject)
     {
         if (LoadFile(filePath, targetObject.GetType(), out var loadedData))
         {
@@ -38,7 +49,7 @@ public class FileStore
         return (T)targetObject;
     }
     
-    private static bool LoadFile(string fileName, Type fileType, [NotNullWhen(true)] out object? loadedData)
+    private bool LoadFile(string fileName, Type fileType, [NotNullWhen(true)] out object? loadedData)
     {
         try
         {
@@ -56,15 +67,15 @@ public class FileStore
         }
         catch (Exception exception)
         {
-            Plugin.Log.Error("Error loading file " + fileName + "." + exception.ToString());
+            _logger.LogError("Error loading file " + fileName + "." + exception.ToString());
             loadedData = null;
             return false;
         }
     }
     
-    public static FileInfo GetFileInfo(string fileName)
+    public FileInfo GetFileInfo(string fileName)
     {
-        var configDirectory = Plugin.PluginInterface.ConfigDirectory;
+        var configDirectory = _pluginInterface.ConfigDirectory;
         return new FileInfo(Path.Combine(configDirectory.FullName, fileName));
     }
 }

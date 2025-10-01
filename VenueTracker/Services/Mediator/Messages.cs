@@ -8,5 +8,8 @@ public record UiToggleMessage(Type UiType) : MessageBase;
 public record LaunchTaskMessage : MessageBase;
 public record LoginMessage : MessageBase;
 public record LogoutMessage : MessageBase;
+public record PriorityFrameworkUpdateMessage : SameThreadMessage;
+public record FrameworkUpdateMessage : SameThreadMessage;
+public record DelayedFrameworkUpdateMessage : SameThreadMessage;
 public record EventMessage(Event Event) : MessageBase;
 

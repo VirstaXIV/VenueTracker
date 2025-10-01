@@ -11,12 +11,10 @@ public class House
     public uint WorldId {get; set;} = 0;
     public ushort Type {get; set;} = 0;
     public string Notes {get; set;} = "";
-    public string WorldName => Plugin.DataManager.GetExcelSheet<Lumina.Excel.Sheets.World>()?.GetRow(WorldId).Name.ToString() ?? $"World_{WorldId}";
-    public string DataCenter => Plugin.DataManager.GetExcelSheet<Lumina.Excel.Sheets.World>()?.GetRow(WorldId).DataCenter.Value.Name.ToString() ?? "";
+    public string WorldName {get; set;} = "";
+    public string DataCenter {get; set;} = "";
     
-    
-    public House()
-    {
+    public House() {
     }
     
     public House(House club) {

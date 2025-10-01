@@ -1,47 +1,58 @@
 ﻿using System.Linq;
+using Dalamud.Plugin.Services;
+using Microsoft.Extensions.Logging;
 using Sheet = Lumina.Excel.Sheets;
 
 
 namespace VenueTracker.Utils;
 
-internal class TerritoryUtils
+public class TerritoryUtils
 {
+    private readonly ILogger<TerritoryUtils> _logger;
+    private readonly IDataManager _gameData;
+    
+    public TerritoryUtils(ILogger<TerritoryUtils> logger, IDataManager gameData)
+    {
+        _logger = logger;
+        _gameData = gameData;
+    }
+    
     // Mist locations 
-    public static readonly ushort MIST_SMALL = 282;
-    public static readonly ushort MIST_MEDIUM = 283;
-    public static readonly ushort MIST_LARGE = 284;
-    public static readonly ushort MIST_CHAMBER = 384;
-    public static readonly ushort MIST_APARTMENT = 608;
+    public const ushort MIST_SMALL = 282;
+    public const ushort MIST_MEDIUM = 283;
+    public const ushort MIST_LARGE = 284;
+    public const ushort MIST_CHAMBER = 384;
+    public const ushort MIST_APARTMENT = 608;
 
     // The Lavender Beds locations 
-    public static readonly ushort LAVENDER_SMALL = 342;
-    public static readonly ushort LAVENDER_MEDIUM = 343;
-    public static readonly ushort LAVENDER_LARGE = 344;
-    public static readonly ushort LAVENDER_CHAMBER = 385;
-    public static readonly ushort LAVENDER_APARTMENT = 609;
+    public const ushort LAVENDER_SMALL = 342;
+    public const ushort LAVENDER_MEDIUM = 343;
+    public const ushort LAVENDER_LARGE = 344;
+    public const ushort LAVENDER_CHAMBER = 385;
+    public const ushort LAVENDER_APARTMENT = 609;
 
     // The Goblet
-    public static readonly ushort GOBLET_SMALL = 345;
-    public static readonly ushort GOBLET_MEDIUM = 346;
-    public static readonly ushort GOBLET_LARGE = 347;
-    public static readonly ushort GOBLET_LARGE_2 = 1251;
-    public static readonly ushort GOBLET_CHAMBER = 386;
-    public static readonly ushort GOBLET_APARTMENT = 610;
+    public const ushort GOBLET_SMALL = 345;
+    public const ushort GOBLET_MEDIUM = 346;
+    public const ushort GOBLET_LARGE = 347;
+    public const ushort GOBLET_LARGE_2 = 1251;
+    public const ushort GOBLET_CHAMBER = 386;
+    public const ushort GOBLET_APARTMENT = 610;
 
     // Shirogane 
-    public static readonly ushort SHIROGANE_SMALL = 649;
-    public static readonly ushort SHIROGANE_MEDIUM = 650;
-    public static readonly ushort SHIROGANE_LARGE = 651;
-    public static readonly ushort SHIROGANE_CHAMBER = 652;
-    public static readonly ushort SHIROGANE_APARTMENT = 655;
+    public const ushort SHIROGANE_SMALL = 649;
+    public const ushort SHIROGANE_MEDIUM = 650;
+    public const ushort SHIROGANE_LARGE = 651;
+    public const ushort SHIROGANE_CHAMBER = 652;
+    public const ushort SHIROGANE_APARTMENT = 655;
 
     // Empyreum 
-    public static readonly ushort EMPYREUM_SMALL = 980;
-    public static readonly ushort EMPYREUM_MEDIUM = 981;
-    public static readonly ushort EMPYREUM_LARGE = 982;
-    public static readonly ushort EMPYREUM_CHAMBER = 983;
-    public static readonly ushort EMPYREUM_APARTMENT = 999;
-    
+    public const ushort EMPYREUM_SMALL = 980;
+    public const ushort EMPYREUM_MEDIUM = 981;
+    public const ushort EMPYREUM_LARGE = 982;
+    public const ushort EMPYREUM_CHAMBER = 983;
+    public const ushort EMPYREUM_APARTMENT = 999;
+
     private static readonly ushort[] HouseTerritoryIds = {
       MIST_SMALL, MIST_MEDIUM, MIST_LARGE, MIST_CHAMBER, MIST_APARTMENT,
       LAVENDER_SMALL, LAVENDER_MEDIUM, LAVENDER_LARGE, LAVENDER_CHAMBER, LAVENDER_APARTMENT, 
@@ -50,11 +61,11 @@ internal class TerritoryUtils
       EMPYREUM_SMALL, EMPYREUM_MEDIUM, EMPYREUM_LARGE, EMPYREUM_CHAMBER, EMPYREUM_APARTMENT, 
     };
 
-    private static readonly ushort[] ChambrerTerritoryIds = {
+    private readonly ushort[] ChambrerTerritoryIds = {
       MIST_CHAMBER, LAVENDER_CHAMBER, GOBLET_CHAMBER, SHIROGANE_CHAMBER, EMPYREUM_CHAMBER, 
     };
 
-    private static readonly ushort[] PlotTerritoryIds = {
+    private readonly ushort[] PlotTerritoryIds = {
       MIST_SMALL, MIST_MEDIUM, MIST_LARGE,
       LAVENDER_SMALL, LAVENDER_MEDIUM, LAVENDER_LARGE,
       GOBLET_SMALL, GOBLET_MEDIUM, GOBLET_LARGE, GOBLET_LARGE_2,
@@ -62,58 +73,58 @@ internal class TerritoryUtils
       EMPYREUM_SMALL, EMPYREUM_MEDIUM, EMPYREUM_LARGE, 
     };
 
-    private static readonly ushort[] SmallHouseTypes = {
+    private readonly ushort[] SmallHouseTypes = {
       MIST_SMALL, LAVENDER_SMALL, GOBLET_SMALL, SHIROGANE_SMALL, EMPYREUM_SMALL,
     };
 
-    private static readonly ushort[] MediumHouseTypes = {
+    private readonly ushort[] MediumHouseTypes = {
       MIST_MEDIUM, LAVENDER_MEDIUM, GOBLET_MEDIUM, SHIROGANE_MEDIUM, EMPYREUM_MEDIUM
     };
 
-    private static readonly ushort[] LargeHouseTypes = {
+    private readonly ushort[] LargeHouseTypes = {
       MIST_LARGE, LAVENDER_LARGE, GOBLET_LARGE, GOBLET_LARGE_2, SHIROGANE_LARGE, EMPYREUM_LARGE
     };
 
-    private static readonly ushort[] ChamberTypes = {
+    private readonly ushort[] ChamberTypes = {
       MIST_CHAMBER, LAVENDER_CHAMBER, GOBLET_CHAMBER, SHIROGANE_CHAMBER, EMPYREUM_CHAMBER
     };
 
-    private static readonly ushort[] AppartmentTypes = {
+    private readonly ushort[] AppartmentTypes = {
       MIST_APARTMENT, LAVENDER_APARTMENT, GOBLET_APARTMENT, SHIROGANE_APARTMENT, EMPYREUM_APARTMENT
     };
 
-    private static readonly ushort[] MistHouses = {
+    private readonly ushort[] MistHouses = {
       MIST_SMALL, MIST_MEDIUM, MIST_LARGE, MIST_CHAMBER, MIST_APARTMENT
     };
 
-    private static readonly ushort[] LavenderHouses = {
+    private readonly ushort[] LavenderHouses = {
       LAVENDER_SMALL, LAVENDER_MEDIUM, LAVENDER_LARGE, LAVENDER_CHAMBER, LAVENDER_APARTMENT
     };
 
-    private static readonly ushort[] GobletHouses = {
+    private readonly ushort[] GobletHouses = {
       GOBLET_SMALL, GOBLET_MEDIUM, GOBLET_LARGE, GOBLET_LARGE_2, GOBLET_CHAMBER, GOBLET_APARTMENT
     };
 
-    private static readonly ushort[] ShiroganeHouses = {
+    private readonly ushort[] ShiroganeHouses = {
       SHIROGANE_SMALL, SHIROGANE_MEDIUM, SHIROGANE_LARGE, SHIROGANE_CHAMBER, SHIROGANE_APARTMENT
     };
 
-    private static readonly ushort[] EmpyreumHouses = {
+    private readonly ushort[] EmpyreumHouses = {
       EMPYREUM_SMALL, EMPYREUM_MEDIUM, EMPYREUM_LARGE, EMPYREUM_CHAMBER, EMPYREUM_APARTMENT
     };
 
-    private static readonly uint SmallHouseIcon = 60751;
-    private static readonly uint MediumHouseIcon = 60752;
-    private static readonly uint LargeHouseIcon = 60753;
-    private static readonly uint ApartmentHouseIcon = 60789;
-    
+    private const uint SmallHouseIcon = 60751;
+    private const uint MediumHouseIcon = 60752;
+    private const uint LargeHouseIcon = 60753;
+    private const uint ApartmentHouseIcon = 60789;
+
     // Returns true if sent territory id is a house 
-    public static bool IsHouse(ushort territory)
+    public bool IsHouse(ushort territory)
     {
       return HouseTerritoryIds.Contains(territory);
     }
 
-    public static string GetHouseType(ushort territory)
+    public string GetHouseType(ushort territory)
     {
       if (SmallHouseTypes.Contains(territory)) return "Small House";
       if (MediumHouseTypes.Contains(territory)) return "Medium House";
@@ -123,7 +134,7 @@ internal class TerritoryUtils
       return "[unknown house type]";
     }
 
-    public static string GetHouseDistrict(ushort territory)
+    public string GetHouseDistrict(ushort territory)
     {
       if (MistHouses.Contains(territory)) return "Mist";
       if (LavenderHouses.Contains(territory)) return "The Lavender Beds";
@@ -133,17 +144,17 @@ internal class TerritoryUtils
       return "[unknown district]";
     }
 
-    public static bool IsChamber(ushort territory)
+    public bool IsChamber(ushort territory)
     {
       return ChambrerTerritoryIds.Contains(territory);
     }
 
-    public static bool IsPlotType(ushort territory)
+    public bool IsPlotType(ushort territory)
     {
       return PlotTerritoryIds.Contains(territory);
     }
 
-    public static uint GetHouseIcon(ushort territory)
+    public uint GetHouseIcon(ushort territory)
     {
       if (SmallHouseTypes.Contains(territory)) return SmallHouseIcon;
       if (MediumHouseTypes.Contains(territory)) return MediumHouseIcon;
@@ -151,9 +162,9 @@ internal class TerritoryUtils
       return AppartmentTypes.Contains(territory) ? ApartmentHouseIcon : (uint)0;
     }
 
-    public static string GetDistrict (long houseId) {
+    public string GetDistrict (long houseId) {
       uint territoryId = (uint)((houseId >> 32) & 0xFFFF);
-      var district = Plugin.DataManager.GetExcelSheet<Sheet.TerritoryType>().GetRow(territoryId).PlaceNameZone.RowId;
+      var district = _gameData.GetExcelSheet<Sheet.TerritoryType>().GetRow(territoryId).PlaceNameZone.RowId;
 
       return district switch
       {

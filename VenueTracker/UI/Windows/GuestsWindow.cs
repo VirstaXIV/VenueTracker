@@ -16,15 +16,17 @@ public class GuestsWindow : WindowMediatorSubscriberBase
     private readonly ApiService _apiService;
     private readonly PluginState _pluginState;
     private readonly GuestsListWidget _guestsListWidget;
+    private readonly TerritoryUtils _territoryUtils;
     
     public GuestsWindow(ILogger<GuestsWindow> logger, VSyncMediator mediator, ConfigService configService, 
-        ApiService apiService, GuestsListWidget guestsListWidget, PluginState pluginState)
+        ApiService apiService, GuestsListWidget guestsListWidget, PluginState pluginState, TerritoryUtils territoryUtils)
         : base(logger, mediator, "Guests##main")
     {
         _configService = configService;
         _apiService = apiService;
         _pluginState = pluginState;
         _guestsListWidget = guestsListWidget;
+        _territoryUtils = territoryUtils;
         
         SizeConstraints = new WindowSizeConstraints
         {
@@ -70,7 +72,7 @@ public class GuestsWindow : WindowMediatorSubscriberBase
                 if (_pluginState.CurrentHouse.Plot > 0) typeText += "P" + _pluginState.CurrentHouse.Plot;
                 if (_pluginState.CurrentHouse.Room > 0) typeText += "Room" + _pluginState.CurrentHouse.Room;
                 ImGui.Text(
-                    "You are in a " + TerritoryUtils.GetHouseType(_pluginState.CurrentHouse.Type) + 
+                    "You are in a " + _territoryUtils.GetHouseType(_pluginState.CurrentHouse.Type) + 
                     " in " + _pluginState.CurrentHouse.District + 
                     " W" + _pluginState.CurrentHouse.Ward + " " + typeText +
                     " With " + _guestsListWidget.GetActiveCount() + " People Inside" +

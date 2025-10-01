@@ -8,14 +8,16 @@ namespace VenueTracker.Data;
 [Serializable]
 public class GuestList
 {
-    private static readonly string OutputFile = "guests.json";
+    private readonly FileStore _fileStore;
+    private readonly string _outputFile = "guests.json";
     public Dictionary<string, Player> Guests { get; set; } = new();
     public long HouseId { get; set; } = 0;
     public House House { get; set; } = new();
     public DateTime StartTime { get; set; } = DateTime.Now;
     
-    public GuestList()
+    public GuestList(FileStore fileStore)
     {
+        _fileStore = fileStore;
     }
     
     public GuestList(long id, House house)
@@ -34,12 +36,12 @@ public class GuestList
     
     private string GetFileName()
     {
-        return HouseId + "-" + OutputFile;
+        return HouseId + "-" + _outputFile;
     }
 
     public void Save()
     {
-        FileStore.SaveClassToFileInPluginDir(GetFileName(), GetType(), this);
+        _fileStore.SaveClassToFileInPluginDir(GetFileName(), GetType(), this);
     }
     
     public void Load()
@@ -47,10 +49,10 @@ public class GuestList
         if (HouseId == 0) return;
 
         // Don't attempt to load if there is no file 
-        var fileInfo = FileStore.GetFileInfo(GetFileName());
+        var fileInfo = _fileStore.GetFileInfo(GetFileName());
         if (!fileInfo.Exists) return;
 
-        GuestList loadedData = FileStore.LoadFile<GuestList>(GetFileName(), this);
+        GuestList loadedData = _fileStore.LoadFile<GuestList>(GetFileName(), this);
         Guests = loadedData.Guests;
         HouseId = loadedData.HouseId;
         StartTime = loadedData.StartTime;

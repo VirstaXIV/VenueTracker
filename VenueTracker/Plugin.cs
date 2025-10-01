@@ -16,6 +16,7 @@ using VenueTracker.Services.Config;
 using VenueTracker.Services.Mediator;
 using VenueTracker.UI.Components;
 using VenueTracker.UI.Windows;
+using VenueTracker.Utils;
 
 namespace VenueTracker;
 
@@ -73,6 +74,8 @@ public sealed class Plugin : IDalamudPlugin
                     
                     // VenueSync Services
                     collection.AddSingleton<VSyncMediator>();
+                    collection.AddSingleton<FileStore>();
+                    collection.AddSingleton<TerritoryUtils>();
                     collection.AddSingleton<Request>();
                     collection.AddSingleton<DoorbellService>();
                     collection.AddSingleton<HookService>();
