@@ -65,7 +65,7 @@ public class ConfigWindow : WindowMediatorSubscriberBase
         if (ImGui.Button("Save Endpoint"))
         {
             _configService.Current.EndpointUrl = _endpointUrl;
-            _configService.Current.Save();
+            _configService.Save();
         }
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {

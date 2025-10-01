@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Game.ClientState.Objects.SubKinds;
@@ -35,6 +37,22 @@ public class UtilService : IHostedService, IMediatorSubscriber
         if (!_framework.IsInFrameworkUpdateThread) throw new InvalidOperationException("Can only be run on Framework");
     }
     
+    public bool GetIsPlayerPresent()
+    {
+        EnsureIsOnFramework();
+        return _clientState.LocalPlayer != null && _clientState.LocalPlayer.IsValid();
+    }
+    
+    public async Task<bool> GetIsPlayerPresentAsync()
+    {
+        return await RunOnFrameworkThread(GetIsPlayerPresent).ConfigureAwait(false);
+    }
+    
+    public async Task<IPlayerCharacter> GetPlayerCharacterAsync()
+    {
+        return await RunOnFrameworkThread(GetPlayerCharacter).ConfigureAwait(false);
+    }
+    
     public IPlayerCharacter GetPlayerCharacter()
     {
         EnsureIsOnFramework();
@@ -64,5 +82,23 @@ public class UtilService : IHostedService, IMediatorSubscriber
     {
         Mediator.UnsubscribeAll(this);
         return Task.CompletedTask;
+    }
+    
+    public async Task RunOnFrameworkThread(System.Action act, [CallerMemberName] string callerMember = "", [CallerFilePath] string callerFilePath = "", [CallerLineNumber] int callerLineNumber = 0)
+    {
+        var fileName = Path.GetFileNameWithoutExtension(callerFilePath);
+        if (!_framework.IsInFrameworkUpdateThread)
+        {
+            await _framework.RunOnFrameworkThread(act).ContinueWith((_) => Task.CompletedTask).ConfigureAwait(false);
+            while (_framework.IsInFrameworkUpdateThread) // yield the thread again, should technically never be triggered
+            {
+                _logger.LogTrace("Still on framework");
+                await Task.Delay(1).ConfigureAwait(false);
+            }
+        }
+        else
+        {
+            act();
+        }
     }
 }

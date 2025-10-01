@@ -76,7 +76,7 @@ public unsafe class HookService : IHostedService, IMediatorSubscriber
         }
         catch (Exception ex)
         {
-            Plugin.Log.Error(ex, "Unable to process random roll");
+            _logger.LogError(ex, "Unable to process random roll");
         }
 
         RandomPrintLogHook!.Original(module, logMessageId, playerName, sex, parameter, flags, homeWorldId);
@@ -91,7 +91,7 @@ public unsafe class HookService : IHostedService, IMediatorSubscriber
         }
         catch (Exception ex)
         {
-            Plugin.Log.Error(ex, "Unable to process dice roll");
+            _logger.LogError(ex, "Unable to process dice roll");
         }
 
         DicePrintLogHook!.Original(module, chatType, playerName, unused, worldId, accountId, contentId, roll, outOf, entityId, ident);

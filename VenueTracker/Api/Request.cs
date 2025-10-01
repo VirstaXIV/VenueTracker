@@ -1,35 +1,60 @@
 ﻿using System;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using VenueTracker.Data;
+using VenueTracker.Services.Mediator;
 
 namespace VenueTracker.Api;
 
-public class Request(Plugin plugin)
+public class Request : IHostedService, IMediatorSubscriber
 {
-    private static HttpClient Client = new();
+    private static HttpClient _client = new();
+    private readonly ILogger<Request> _logger;
+    private readonly PluginState _pluginState;
+
+    public Request(ILogger<Request> logger, PluginState pluginState)
+    {
+        _logger = logger;
+        _pluginState = pluginState;
+    }
+    
+    public VSyncMediator Mediator { get; }
+    
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
     
     public void Dispose()
     {
-        Client.Dispose();
+        _client.Dispose();
     }
 
     public async Task<string?> GetAsync(string url, bool authenticated = true)
     {
-        Client = new HttpClient();
+        _client = new HttpClient();
         if (authenticated)
         {
-            Client.DefaultRequestHeaders.Add("Authorization", "Bearer " + plugin.PluginState.ServerToken);
+            _client.DefaultRequestHeaders.Add("Authorization", "Bearer " + _pluginState.ServerToken);
         }
         
         try
         {
-            using HttpResponseMessage response = await Client.GetAsync(new Uri(url));
+            using HttpResponseMessage response = await _client.GetAsync(new Uri(url));
             response.EnsureSuccessStatusCode();
 
             return await response.Content.ReadAsStringAsync();
         } catch {
-            Plugin.Log.Warning("Failed to get " + url);
+            _logger.LogWarning("Failed to get " + url);
         }
         
         return null;
@@ -37,22 +62,22 @@ public class Request(Plugin plugin)
 
     public async Task<string?> PostAsync(string url, string content, bool authenticated = true)
     {
-        Client = new HttpClient();
+        _client = new HttpClient();
         if (authenticated)
         {
-            Client.DefaultRequestHeaders.Add("Authorization", "Bearer " + plugin.PluginState.ServerToken);
+            _client.DefaultRequestHeaders.Add("Authorization", "Bearer " + _pluginState.ServerToken);
         }
         
         StringContent stringContent = new(content, Encoding.UTF8, "application/json");
 
         try
         {
-            using HttpResponseMessage response = await Client.PostAsync(new Uri(url), stringContent);
+            using HttpResponseMessage response = await _client.PostAsync(new Uri(url), stringContent);
             response.EnsureSuccessStatusCode();
 
             return await response.Content.ReadAsStringAsync();
         } catch {
-            Plugin.Log.Warning("Failed to post to " + url);
+            _logger.LogWarning("Failed to post to " + url);
         }
         
         return null;

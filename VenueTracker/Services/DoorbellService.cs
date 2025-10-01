@@ -58,7 +58,7 @@ public class DoorbellService : IHostedService, IMediatorSubscriber
             var fileToLoad = Path.Join(_pluginInterface.AssemblyLocation.Directory!.FullName, file);
             
             if (!System.IO.File.Exists(fileToLoad)) {
-                Plugin.Log.Warning($"{file} does not exist.");
+                _logger.LogWarning($"{file} does not exist.");
                 return;
             }
             _audioFileReader = new AudioFileReader(fileToLoad);
@@ -66,7 +66,7 @@ public class DoorbellService : IHostedService, IMediatorSubscriber
             _wavEvent = new WaveOutEvent();
             _wavEvent.Init(_audioFileReader);
         } catch (Exception ex) {
-            Plugin.Log.Error(ex, "Error loading sound file " + file);
+            _logger.LogError(ex, "Error loading sound file " + file);
         }
     }
     

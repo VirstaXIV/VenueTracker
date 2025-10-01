@@ -1,8 +1,8 @@
-﻿using Sheet = Lumina.Excel.Sheets;
-using System.Linq;
+﻿using System.Linq;
+using Sheet = Lumina.Excel.Sheets;
 
 
-namespace VenueTracker;
+namespace VenueTracker.Utils;
 
 internal class TerritoryUtils
 {

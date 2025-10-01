@@ -123,12 +123,12 @@ public class ApiService : IHostedService, IMediatorSubscriber
             }
             else
             {
-                Plugin.Log.Warning("Failed to deserialize response data");
+                _logger.LogWarning("Failed to deserialize response data");
             }
         }
         else
         {
-            Plugin.Log.Warning("Login request failed");
+            _logger.LogWarning("Login request failed");
         }
 
         IsRequestingApi = false;
@@ -160,12 +160,12 @@ public class ApiService : IHostedService, IMediatorSubscriber
             }
             else
             {
-                Plugin.Log.Warning("Failed to deserialize response data");
+                _logger.LogWarning("Failed to deserialize response data");
             }
         }
         else
         {
-            Plugin.Log.Warning("Registration request failed");
+            _logger.LogWarning("Registration request failed");
         }
 
         IsRequestingApi = false;
@@ -190,13 +190,13 @@ public class ApiService : IHostedService, IMediatorSubscriber
             else
             {
                 HadApiError = true;
-                Plugin.Log.Warning("Failed to deserialize response data");
+                _logger.LogWarning("Failed to deserialize response data");
             }
         }
         else
         {
             HadApiError = true;
-            Plugin.Log.Warning("Get Venue request failed");
+            _logger.LogWarning("Get Venue request failed");
         }
 
         IsRequestingApi = false;

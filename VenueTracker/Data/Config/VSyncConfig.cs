@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace VenueTracker.Data.Config;
 
 [Serializable]
-public class VSyncConfig : IVSyncConfiguration, IPluginConfiguration
+public class VSyncConfig : IVSyncConfiguration
 {
     public int Version { get; set; } = 1;
     public bool IsConfigWindowMovable { get; set; } = true;
@@ -17,10 +17,6 @@ public class VSyncConfig : IVSyncConfiguration, IPluginConfiguration
 
     public string EndpointUrl { get; set; } = "";
     public string ServerKey { get; set; } = "";
-
-    // The below exist just to make saving less cumbersome
-    public void Save()
-    {
-        Plugin.PluginInterface.SavePluginConfig(this);
-    }
+    
+    public LogLevel LogLevel { get; set; } = LogLevel.Information;
 }

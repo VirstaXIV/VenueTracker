@@ -6,6 +6,7 @@ using VenueTracker.Services;
 using VenueTracker.Services.Config;
 using VenueTracker.Services.Mediator;
 using VenueTracker.UI.Components;
+using VenueTracker.Utils;
 
 namespace VenueTracker.UI.Windows;
 
