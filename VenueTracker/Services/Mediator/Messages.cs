@@ -1,6 +1,4 @@
 ﻿using System;
-using Dalamud.Game.ClientState.Objects.Types;
-using System.Numerics;
 using VenueTracker.Services.Events;
 
 namespace VenueTracker.Services.Mediator;

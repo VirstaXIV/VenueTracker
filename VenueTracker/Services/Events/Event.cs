@@ -12,17 +12,17 @@ public record Event
     public EventSeverity EventSeverity { get; }
     public string Message { get; }
 
-    public Event(string? Character, UserData UserData, string EventSource, EventSeverity EventSeverity, string Message)
+    public Event(string? Character, UserData userData, string EventSource, EventSeverity EventSeverity, string Message)
     {
         EventTime = DateTime.Now;
-        this.UID = UserData.AliasOrUID;
+        this.UID = userData.AliasOrUID;
         this.Character = Character ?? string.Empty;
         this.EventSource = EventSource;
         this.EventSeverity = EventSeverity;
         this.Message = Message;
     }
 
-    public Event(UserData UserData, string EventSource, EventSeverity EventSeverity, string Message) : this(null, UserData, EventSource, EventSeverity, Message)
+    public Event(UserData userData, string EventSource, EventSeverity EventSeverity, string Message) : this(null, userData, EventSource, EventSeverity, Message)
     {
     }
 
@@ -35,12 +35,6 @@ public record Event
     {
         if (string.IsNullOrEmpty(UID))
             return $"{EventTime:HH:mm:ss.fff}\t[{EventSource}]{{{(int)EventSeverity}}}\t{Message}";
-        else
-        {
-            if (string.IsNullOrEmpty(Character))
-                return $"{EventTime:HH:mm:ss.fff}\t[{EventSource}]{{{(int)EventSeverity}}}\t<{UID}> {Message}";
-            else
-                return $"{EventTime:HH:mm:ss.fff}\t[{EventSource}]{{{(int)EventSeverity}}}\t<{UID}\\{Character}> {Message}";
-        }
+        return string.IsNullOrEmpty(Character) ? $"{EventTime:HH:mm:ss.fff}\t[{EventSource}]{{{(int)EventSeverity}}}\t<{UID}> {Message}" : $"{EventTime:HH:mm:ss.fff}\t[{EventSource}]{{{(int)EventSeverity}}}\t<{UID}\\{Character}> {Message}";
     }
 }

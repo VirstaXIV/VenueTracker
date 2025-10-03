@@ -9,7 +9,7 @@ namespace VenueTracker.Data;
 public class GuestList
 {
     private readonly FileStore _fileStore;
-    private readonly string _outputFile = "guests.json";
+    private const string outputFile = "guests.json";
     public Dictionary<string, Player> Guests { get; set; } = new();
     public long HouseId { get; set; } = 0;
     public House House { get; set; } = new();
@@ -20,14 +20,16 @@ public class GuestList
         _fileStore = fileStore;
     }
     
-    public GuestList(long id, House house)
+    public GuestList(long id, House house, FileStore fileStore)
     {
         HouseId = id;
+        _fileStore = fileStore;
         House = new House(house);
     }
     
-    public GuestList(GuestList list) 
+    public GuestList(GuestList list, FileStore fileStore) 
     {
+        _fileStore = fileStore;
         Guests = list.Guests;
         HouseId = list.HouseId;
         House = list.House;
@@ -36,7 +38,7 @@ public class GuestList
     
     private string GetFileName()
     {
-        return HouseId + "-" + _outputFile;
+        return HouseId + "-" + outputFile;
     }
 
     public void Save()

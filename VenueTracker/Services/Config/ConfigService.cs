@@ -2,14 +2,9 @@
 
 namespace VenueTracker.Services.Config
 {
-    public class ConfigService : ConfigurationServiceBase<VSyncConfig>
+    public class ConfigService(string configDir) : ConfigurationServiceBase<VSyncConfig>(configDir)
     {
-        public const string ConfigName = "config.json";
-
-        public ConfigService(string configDir) : base(configDir)
-        {
-        }
-
-        public override string ConfigurationName => ConfigName;
+        private const string configName = "config.json";
+        public override string ConfigurationName => configName;
     }
 }

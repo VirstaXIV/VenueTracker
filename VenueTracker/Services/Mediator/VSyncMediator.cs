@@ -27,28 +27,6 @@ public sealed class VSyncMediator : IHostedService
         _logger = logger;
     }
     
-    public void PrintSubscriberInfo()
-    {
-        foreach (var subscriber in _subscriberDict.SelectMany(c => c.Value.Select(v => v.Subscriber))
-                                                  .DistinctBy(p => p).OrderBy(p => p.GetType().FullName, StringComparer.Ordinal).ToList())
-        {
-            _logger.LogInformation("Subscriber {type}: {sub}", subscriber.GetType().Name, subscriber.ToString());
-            StringBuilder sb = new();
-            sb.Append("=> ");
-            foreach (var item in _subscriberDict.Where(item => item.Value.Any(v => v.Subscriber == subscriber)).ToList())
-            {
-                sb.Append(item.Key.Item1.Name);
-                if (item.Key.Item2 != null)
-                    sb.Append($":{item.Key.Item2!}");
-                sb.Append(", ");
-            }
-
-            if (!string.Equals(sb.ToString(), "=> ", StringComparison.Ordinal))
-                _logger.LogInformation("{sb}", sb.ToString());
-            _logger.LogInformation("---");
-        }
-    }
-    
     public void Publish<T>(T message) where T : MessageBase
     {
         if (message.KeepThreadContext)
@@ -198,15 +176,10 @@ public sealed class VSyncMediator : IHostedService
         _processQueue = true;
     }
 
-    private sealed class SubscriberAction
+    private sealed class SubscriberAction(IMediatorSubscriber subscriber, object action)
     {
-        public SubscriberAction(IMediatorSubscriber subscriber, object action)
-        {
-            Subscriber = subscriber;
-            Action = action;
-        }
 
-        public object Action { get; }
-        public IMediatorSubscriber Subscriber { get; }
+        public object Action { get; } = action;
+        public IMediatorSubscriber Subscriber { get; } = subscriber;
     }
 }

@@ -30,10 +30,11 @@ public unsafe class HookService : IHostedService, IMediatorSubscriber
     private delegate void DicePrintLogDelegate(RaptureLogModule* module, ushort chatType, byte* userName, void* unused, ushort worldId, ulong accountId, ulong contentId, ushort roll, ushort outOf, uint entityId, byte ident);
 
 
-    public HookService(ILogger<HookService> logger, IGameInteropProvider gameInteropProvider, GuestsListWidget guestsListWidget)
+    public HookService(ILogger<HookService> logger, IGameInteropProvider gameInteropProvider, GuestsListWidget guestsListWidget, VSyncMediator mediator)
     {
         _logger = logger;
         _guestsListWidget = guestsListWidget;
+        Mediator = mediator;
         gameInteropProvider.InitializeFromAttributes(this);
 
         RandomPrintLogHook?.Enable();

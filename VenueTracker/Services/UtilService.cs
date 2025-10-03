@@ -51,13 +51,14 @@ public class UtilService : IHostedService, IMediatorSubscriber
     private bool _sentBetweenAreas = false;
     private static readonly Dictionary<uint, PlayerInfo> _playerInfoCache = new();
     
-    public UtilService(ILogger<UtilService> logger, IClientState clientState, IFramework framework, IChatGui chatGui, ICondition condition)
+    public UtilService(ILogger<UtilService> logger, IClientState clientState, IFramework framework, IChatGui chatGui, ICondition condition, VSyncMediator mediator)
     {
         _logger = logger;
         _clientState = clientState;
         _framework = framework;
         _chatGui = chatGui;
         _condition = condition;
+        Mediator = mediator;
     }
     
     public bool IsAnythingDrawing { get; private set; } = false;

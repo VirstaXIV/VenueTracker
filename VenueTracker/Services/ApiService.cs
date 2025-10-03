@@ -25,7 +25,7 @@ public class ApiService : IHostedService, IMediatorSubscriber
     private bool _isLoggedInApi = false;
     
     public ApiService(ILogger<ApiService> logger, ConfigService configService, Request request, 
-        PluginState pluginState, UtilService utilService, ConfigWindow configWindow)
+        PluginState pluginState, UtilService utilService, ConfigWindow configWindow, VSyncMediator mediator)
     {
         _logger = logger;
         _configService = configService;
@@ -33,6 +33,7 @@ public class ApiService : IHostedService, IMediatorSubscriber
         _pluginState = pluginState;
         _utilService = utilService;
         _configWindow = configWindow;
+        Mediator = mediator;
     }
     
     public VSyncMediator Mediator { get; }

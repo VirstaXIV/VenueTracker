@@ -35,8 +35,8 @@ public class PluginService : MediatorSubscriberBase, IHostedService
     private readonly TerritoryUtils _territoryUtils;
     private IServiceScope? _runtimeServiceScope;
     private Task? _launchTask = null;
-    private bool running = false;
-    private bool justEnteredHouse = false;
+    private bool _running = false;
+    private bool _justEnteredHouse = false;
     
     public PluginService(ILogger<PluginService> logger, UtilService utilService, PluginState pluginState, IDataManager gameData,
         IFramework framework, IClientState clientState, GuestList guestList, DoorbellService doorbellService, IObjectTable objectTable,
@@ -68,6 +68,9 @@ public class PluginService : MediatorSubscriberBase, IHostedService
         Mediator.Subscribe<LogoutMessage>(this, (_) => OnLogout());
 
         Mediator.StartQueueProcessing();
+        
+        _framework.Update += OnFrameworkUpdate;
+        _clientState.TerritoryChanged += OnTerritoryChanged;
 
         return Task.CompletedTask;
     }
@@ -75,25 +78,19 @@ public class PluginService : MediatorSubscriberBase, IHostedService
     public Task StopAsync(CancellationToken cancellationToken)
     {
         UnsubscribeAll();
-
         OnLogout();
+        _framework.Update -= OnFrameworkUpdate;
+        _clientState.TerritoryChanged -= OnTerritoryChanged;
 
         Logger.LogDebug("Halting PluginService");
 
         return Task.CompletedTask;
     }
     
-    public void Dispose()
-    {
-        //TODO: Need to properly handle disposal here
-        _framework.Update -= OnFrameworkUpdate;
-        _clientState.TerritoryChanged -= OnTerritoryChanged;
-    }
-    
     private void EnteredHouse()
     {
         _pluginState.PlayerInHouse = true;
-        justEnteredHouse = true;
+        _justEnteredHouse = true;
     }
     
     private void LeftHouse()
@@ -168,11 +165,11 @@ public class PluginService : MediatorSubscriberBase, IHostedService
 
     private unsafe void OnFrameworkUpdate(IFramework framework)
     {
-        if (running) {
+        if (_running) {
             _logger.LogWarning("Skipping processing while already running.");
             return;
         }
-        running = true;
+        _running = true;
 
         try
         {
@@ -201,7 +198,7 @@ public class PluginService : MediatorSubscriberBase, IHostedService
                 }
                 catch
                 {
-                    running = false;
+                    _running = false;
                 }
                 
                 bool guestListUpdated = false;
@@ -253,7 +250,7 @@ public class PluginService : MediatorSubscriberBase, IHostedService
                         if (!isSelf) playerArrived = true;
                     }
                     // Current user just entered house
-                    else if (justEnteredHouse)
+                    else if (_justEnteredHouse)
                     {
                         _guestList.Guests[player.Name].TimeCursor = DateTime.Now;
                     }
@@ -265,7 +262,7 @@ public class PluginService : MediatorSubscriberBase, IHostedService
                     _guestList.Guests[player.Name].LastSeen = DateTime.Now;
                     
                     // Mark last time current player enter house 
-                    if (justEnteredHouse && isSelf)
+                    if (_justEnteredHouse && isSelf)
                     {
                         _guestList.Guests[player.Name].LatestEntry = DateTime.Now;
                     }
@@ -302,7 +299,7 @@ public class PluginService : MediatorSubscriberBase, IHostedService
                 // Save config if we saw new players
                 if (guestListUpdated) _guestList.Save();
                 
-                justEnteredHouse = false;
+                _justEnteredHouse = false;
             }
         }
         catch (Exception e)
@@ -310,6 +307,6 @@ public class PluginService : MediatorSubscriberBase, IHostedService
             _logger.LogError("Venue Tracker Failed during framework update");
             _logger.LogError(e.ToString());
         }
-        running = false;
+        _running = false;
     }
 }

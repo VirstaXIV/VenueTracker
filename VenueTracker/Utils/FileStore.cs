@@ -8,17 +8,9 @@ using Newtonsoft.Json;
 
 namespace VenueTracker.Utils;
 
-public class FileStore
+public class FileStore(ILogger<FileStore> logger, IDalamudPluginInterface pluginInterface)
 {
-    private readonly ILogger<FileStore>  _logger;
-    private readonly IDalamudPluginInterface  _pluginInterface;
-    
-    public FileStore(ILogger<FileStore> logger, IDalamudPluginInterface pluginInterface)
-    {
-        _logger = logger;
-        _pluginInterface = pluginInterface;
-    }
-    
+
     public void SaveClassToFile(string path, Type fileType, object objectData)
     {
         try
@@ -28,7 +20,7 @@ public class FileStore
         }
         catch (Exception exception)
         {
-            _logger.LogError("Failed to save file: " + exception.ToString());
+            logger.LogError("Failed to save file: " + exception.ToString());
         }
     }
     
@@ -67,7 +59,7 @@ public class FileStore
         }
         catch (Exception exception)
         {
-            _logger.LogError("Error loading file " + fileName + "." + exception.ToString());
+            logger.LogError("Error loading file " + fileName + "." + exception.ToString());
             loadedData = null;
             return false;
         }
@@ -75,7 +67,7 @@ public class FileStore
     
     public FileInfo GetFileInfo(string fileName)
     {
-        var configDirectory = _pluginInterface.ConfigDirectory;
+        var configDirectory = pluginInterface.ConfigDirectory;
         return new FileInfo(Path.Combine(configDirectory.FullName, fileName));
     }
 }

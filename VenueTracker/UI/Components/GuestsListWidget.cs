@@ -94,7 +94,7 @@ public class GuestsListWidget : IDisposable, IHostedService
         // Filter friends to top 
         if (_configService.Current.SortFriendsToTop && pair1.Value.IsFriend != pair2.Value.IsFriend && 
             ((_configService.Current.SortCurrentVisitorsTop && pair1.Value.InHouse == pair2.Value.InHouse) || !_configService.Current.SortCurrentVisitorsTop)) {
-        return pair2.Value.IsFriend.CompareTo(pair1.Value.IsFriend);
+            return pair2.Value.IsFriend.CompareTo(pair1.Value.IsFriend);
         } 
         // Filter in house to top 
         else if (_configService.Current.SortCurrentVisitorsTop && pair1.Value.InHouse != pair2.Value.InHouse) {

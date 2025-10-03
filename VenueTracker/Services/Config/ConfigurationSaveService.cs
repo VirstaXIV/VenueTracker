@@ -37,7 +37,7 @@ public class ConfigurationSaveService : IHostedService
         _configSaveSemaphore.Release();
     }
     
-    private async Task PeriodicSaveCheck(CancellationToken ct)
+    async private Task PeriodicSaveCheck(CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)
         {
@@ -54,7 +54,7 @@ public class ConfigurationSaveService : IHostedService
         }
     }
 
-    private async Task SaveConfigs()
+    async private Task SaveConfigs()
     {
         if (_configsToSave.Count == 0) return;
 
@@ -71,7 +71,7 @@ public class ConfigurationSaveService : IHostedService
         }
     }
 
-    private async Task SaveConfig<T>(IConfigService<T> config) where T : IVSyncConfiguration
+    async private Task SaveConfig<T>(IConfigService<T> config) where T : IVSyncConfiguration
     {
         _logger.LogTrace("Saving {configName}", config.ConfigurationName);
         var configDir = config.ConfigurationPath.Replace(config.ConfigurationName, string.Empty);

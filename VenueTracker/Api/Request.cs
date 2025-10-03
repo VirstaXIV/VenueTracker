@@ -10,20 +10,12 @@ using VenueTracker.Services.Mediator;
 
 namespace VenueTracker.Api;
 
-public class Request : IHostedService, IMediatorSubscriber
+public class Request(ILogger<Request> logger, PluginState pluginState, VSyncMediator mediator) : IHostedService, IMediatorSubscriber
 {
     private static HttpClient _client = new();
-    private readonly ILogger<Request> _logger;
-    private readonly PluginState _pluginState;
 
-    public Request(ILogger<Request> logger, PluginState pluginState)
-    {
-        _logger = logger;
-        _pluginState = pluginState;
-    }
-    
-    public VSyncMediator Mediator { get; }
-    
+    public VSyncMediator Mediator { get; } = mediator;
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
@@ -44,7 +36,7 @@ public class Request : IHostedService, IMediatorSubscriber
         _client = new HttpClient();
         if (authenticated)
         {
-            _client.DefaultRequestHeaders.Add("Authorization", "Bearer " + _pluginState.ServerToken);
+            _client.DefaultRequestHeaders.Add("Authorization", "Bearer " + pluginState.ServerToken);
         }
         
         try
@@ -54,7 +46,7 @@ public class Request : IHostedService, IMediatorSubscriber
 
             return await response.Content.ReadAsStringAsync();
         } catch {
-            _logger.LogWarning("Failed to get " + url);
+            logger.LogWarning("Failed to get " + url);
         }
         
         return null;
@@ -65,7 +57,7 @@ public class Request : IHostedService, IMediatorSubscriber
         _client = new HttpClient();
         if (authenticated)
         {
-            _client.DefaultRequestHeaders.Add("Authorization", "Bearer " + _pluginState.ServerToken);
+            _client.DefaultRequestHeaders.Add("Authorization", "Bearer " + pluginState.ServerToken);
         }
         
         StringContent stringContent = new(content, Encoding.UTF8, "application/json");
@@ -77,7 +69,7 @@ public class Request : IHostedService, IMediatorSubscriber
 
             return await response.Content.ReadAsStringAsync();
         } catch {
-            _logger.LogWarning("Failed to post to " + url);
+            logger.LogWarning("Failed to post to " + url);
         }
         
         return null;

@@ -8,7 +8,7 @@ namespace VenueTracker.Services.Mediator;
 
 public abstract class WindowMediatorSubscriberBase : Window, IMediatorSubscriber, IDisposable
 {
-    protected readonly ILogger _logger;
+    private readonly ILogger _logger;
     
     protected WindowMediatorSubscriberBase(ILogger logger, VSyncMediator mediator, string name) : base(name)
     {

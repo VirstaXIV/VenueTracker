@@ -21,10 +21,11 @@ public class DoorbellService : IHostedService, IMediatorSubscriber
     private readonly IDalamudPluginInterface _pluginInterface;
     
     public DoorbellService(ILogger<DoorbellService> logger, IDalamudPluginInterface pluginInterface, 
-        ConfigService configService)
+        ConfigService configService, VSyncMediator mediator)
     {
         _logger = logger;
         _configService = configService;
+        Mediator = mediator;
         _pluginInterface = pluginInterface;
     }
     

@@ -3,12 +3,8 @@ using Microsoft.Extensions.Logging;
 
 namespace VenueTracker.Services.Mediator;
 
-public abstract class DisposableMediatorSubscriberBase : MediatorSubscriberBase, IDisposable
+public abstract class DisposableMediatorSubscriberBase(ILogger logger, VSyncMediator mediator) : MediatorSubscriberBase(logger, mediator), IDisposable
 {
-    protected DisposableMediatorSubscriberBase(ILogger logger, VSyncMediator mediator) : base(logger, mediator)
-    {
-    }
-
     public void Dispose()
     {
         Dispose(disposing: true);

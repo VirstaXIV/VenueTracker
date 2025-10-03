@@ -6,17 +6,10 @@ using Sheet = Lumina.Excel.Sheets;
 
 namespace VenueTracker.Utils;
 
-public class TerritoryUtils
+public class TerritoryUtils(ILogger<TerritoryUtils> logger, IDataManager gameData)
 {
-    private readonly ILogger<TerritoryUtils> _logger;
-    private readonly IDataManager _gameData;
-    
-    public TerritoryUtils(ILogger<TerritoryUtils> logger, IDataManager gameData)
-    {
-        _logger = logger;
-        _gameData = gameData;
-    }
-    
+    private readonly ILogger<TerritoryUtils> _logger = logger;
+
     // Mist locations 
     public const ushort MIST_SMALL = 282;
     public const ushort MIST_MEDIUM = 283;
@@ -164,7 +157,7 @@ public class TerritoryUtils
 
     public string GetDistrict (long houseId) {
       uint territoryId = (uint)((houseId >> 32) & 0xFFFF);
-      var district = _gameData.GetExcelSheet<Sheet.TerritoryType>().GetRow(territoryId).PlaceNameZone.RowId;
+      var district = gameData.GetExcelSheet<Sheet.TerritoryType>().GetRow(territoryId).PlaceNameZone.RowId;
 
       return district switch
       {

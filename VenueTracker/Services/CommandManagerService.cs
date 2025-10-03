@@ -8,7 +8,7 @@ namespace VenueTracker.Services;
 
 public class CommandManagerService : IDisposable
 {
-    private const string _commandName = "/vsync";
+    private const string commandName = "/vsync";
     
     private readonly ICommandManager _commandManager;
     private readonly VSyncMediator _mediator;
@@ -18,7 +18,7 @@ public class CommandManagerService : IDisposable
         _commandManager = commandManager;
         _mediator = mediator;
         
-        _commandManager.AddHandler(_commandName, new CommandInfo(OnCommand)
+        _commandManager.AddHandler(commandName, new CommandInfo(OnCommand)
         {
             HelpMessage = "Opens the Guests UI"
         });
@@ -26,7 +26,7 @@ public class CommandManagerService : IDisposable
     
     public void Dispose()
     {
-        _commandManager.RemoveHandler(_commandName);
+        _commandManager.RemoveHandler(commandName);
     }
     
     private void OnCommand(string command, string args)

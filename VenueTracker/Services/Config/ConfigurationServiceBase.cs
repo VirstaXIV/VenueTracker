@@ -23,8 +23,8 @@ public abstract class ConfigurationServiceBase<T> : IConfigService<T> where T : 
 
         _currentConfigInternal = LazyConfig();
     }
-    
-    public string ConfigurationDirectory { get; init; }
+
+    private string ConfigurationDirectory { get; init; }
     public T Current => _currentConfigInternal.Value;
     public abstract string ConfigurationName { get; }
     public string ConfigurationPath => Path.Combine(ConfigurationDirectory, ConfigurationName);
@@ -52,8 +52,8 @@ public abstract class ConfigurationServiceBase<T> : IConfigService<T> where T : 
         _periodicCheckCts.Cancel();
         _periodicCheckCts.Dispose();
     }
-    
-    protected T LoadConfig()
+
+    private T LoadConfig()
     {
         T? config;
         if (!File.Exists(ConfigurationPath))
@@ -115,7 +115,7 @@ public abstract class ConfigurationServiceBase<T> : IConfigService<T> where T : 
         return default;
     }
 
-    private async Task CheckForConfigUpdatesInternal()
+    async private Task CheckForConfigUpdatesInternal()
     {
         while (!_periodicCheckCts.IsCancellationRequested)
         {
